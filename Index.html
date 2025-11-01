@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIZEN AI A7 - Hacker Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        .matrix-char {
+            position: absolute;
+            color: #00ff00;
+            font-size: 14px;
+            font-weight: bold;
+            opacity: 0;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .banner {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(90deg, #00ff00, #ff0000);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 4rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        .status-panel {
+            background: rgba(0, 20, 0, 0.8);
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .status-header {
+            color: #00ffff;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .progress-container {
+            margin: 20px 0;
+        }
+
+        .progress-label {
+            color: #00aaff;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #002200;
+            border: 1px solid #00ff00;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #00aa00);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-text {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #000;
+            font-weight: bold;
+        }
+
+        .result-table {
+            width: 100%;
+            border: 2px solid #00ff00;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: rgba(0, 10, 0, 0.9);
+        }
+
+        .result-table td {
+            padding: 15px;
+            border: 1px solid #00ff00;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .period-cell {
+            color: #ffff00;
+            font-weight: bold;
+        }
+
+        .result-cell {
+            color: #00ffff;
+            font-weight: bold;
+            font-size: 1.5rem !important;
+        }
+
+        .alert {
+            color: #ff4444;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin: 10px 0;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .btn {
+            background: #003300;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 15px #00ff00;
+        }
+
+        .process-log {
+            background: #001100;
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin: 10px 0;
+            height: 200px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+        }
+
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .glow {
+            text-shadow: 0 0 10px currentColor;
+        }
+
+        .time-info {
+            text-align: center;
+            margin: 10px 0;
+            color: #00aaff;
+        }
+
+        .countdown {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-bg" id="matrixBg"></div>
+    
+    <div class="container">
+        <div class="banner glow">AIZEN AI A7</div>
+        
+        <div class="time-info">
+            <div id="utcTime">UTC Time: --:--:--</div>
+            <div class="countdown" id="countdown">Next update in: --s</div>
+        </div>
+        
+        <div class="status-panel">
+            <div class="status-header">SYSTEM STATUS</div>
+            <div id="systemStatus" class="alert">Initializing AI modules...</div>
+            
+            <div class="progress-container">
+                <div class="progress-label">System Initialization</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="systemProgress">
+                        <div class="progress-text" id="progressText">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="process-log" id="processLog">
+                <div class="log-entry">[PROCESS] Starting AIZEN AI A7 system...</div>
+            </div>
+        </div>
+
+        <div class="status-panel">
+            <div class="status-header">LIVE PREDICTION RESULTS</div>
+            <div id="alertMessage" class="alert" style="display: none;">
+                [ALERT] NEW PERIOD DETECTED
+            </div>
+            
+            <table class="result-table">
+                <tr>
+                    <td class="period-cell">PERIOD NUMBER</td>
+                    <td id="periodDisplay" class="period-cell">-</td>
+                </tr>
+                <tr>
+                    <td class="result-cell">RESULT</td>
+                    <td id="resultDisplay" class="result-cell">-</td>
+                </tr>
+            </table>
+            
+            <div class="controls">
+                <button class="btn" onclick="startMatrix()">Start Matrix Effect</button>
+                <button class="btn" onclick="stopMatrix()">Stop Matrix Effect</button>
+                <button class="btn" onclick="forceUpdate()">Force Update</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let progress = 0;
+        let progressInterval;
+        let statusInterval;
+        let matrixInterval;
+        let countdownInterval;
+        let eventSource;
+
+        // Initialize progress bar animation
+        function initializeProgress() {
+            progressInterval = setInterval(() => {
+                if (progress < 100) {
+                    progress += 2;
+                    document.getElementById('systemProgress').style.width = progress + '%';
+                    document.getElementById('progressText').textContent = progress + '%';
+                } else {
+                    clearInterval(progressInterval);
+                }
+            }, 100);
+        }
+
+        // Update countdown timer
+        function updateCountdown(seconds) {
+            const countdownElement = document.getElementById('countdown');
+            countdownElement.textContent = `Next update in: ${seconds}s`;
+            
+            // Change color based on time remaining
+            if (seconds <= 10) {
+                countdownElement.style.color = '#ff4444';
+                countdownElement.style.animation = 'blink 1s infinite';
+            } else if (seconds <= 30) {
+                countdownElement.style.color = '#ffff00';
+                countdownElement.style.animation = 'none';
+            } else {
+                countdownElement.style.color = '#00ff00';
+                countdownElement.style.animation = 'none';
+            }
+        }
+
+        // Update system status
+        function updateStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('systemStatus').textContent = data.system_status;
+                    document.getElementById('utcTime').textContent = `UTC Time: ${data.utc_time}`;
+                    
+                    // Update countdown
+                    if (data.next_update_in !== undefined) {
+                        updateCountdown(data.next_update_in);
+                    }
+                    
+                    if (data.processes_completed) {
+                        document.getElementById('systemStatus').style.color = '#00ff00';
+                        clearInterval(progressInterval);
+                        document.getElementById('systemProgress').style.width = '100%';
+                        document.getElementById('progressText').textContent = '100%';
+                    }
+
+                    if (data.current_period && data.current_result) {
+                        const periodElement = document.getElementById('periodDisplay');
+                        const resultElement = document.getElementById('resultDisplay');
+                        
+                        if (periodElement.textContent !== data.current_period.toString()) {
+                            // New period detected - show alert and log
+                            document.getElementById('alertMessage').style.display = 'block';
+                            const log = document.getElementById('processLog');
+                            const logEntry = document.createElement('div');
+                            logEntry.className = 'log-entry';
+                            logEntry.textContent = `[UPDATE] Period ${data.current_period}: ${data.current_result} - ${new Date().toLocaleTimeString()}`;
+                            log.appendChild(logEntry);
+                            log.scrollTop = log.scrollHeight;
+                            
+                            setTimeout(() => {
+                                document.getElementById('alertMessage').style.display = 'none';
+                            }, 3000);
+                        }
+                        
+                        periodElement.textContent = data.current_period;
+                        resultElement.textContent = data.current_result;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching status:', error);
+                });
+        }
+
+        // Matrix effect
+        function createMatrixEffect() {
+            const matrixBg = document.getElementById('matrixBg');
+            matrixBg.innerHTML = '';
+            
+            const chars = '01';
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const fontSize = 14;
+            const columns = Math.floor(width / fontSize);
+            
+            for (let i = 0; i < columns; i++) {
+                const char = document.createElement('div');
+                char.className = 'matrix-char';
+                char.textContent = chars[Math.floor(Math.random() * chars.length)];
+                char.style.left = (i * fontSize) + 'px';
+                char.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                char.style.animationDelay = (Math.random() * 5) + 's';
+                matrixBg.appendChild(char);
+            }
+        }
+
+        function startMatrix() {
+            document.getElementById('matrixBg').style.display = 'block';
+            createMatrixEffect();
+            fetch('/api/matrix/start');
+        }
+
+        function stopMatrix() {
+            document.getElementById('matrixBg').style.display = 'none';
+            fetch('/api/matrix/stop');
+        }
+
+        function forceUpdate() {
+            fetch('/api/force_update')
+                .then(response => response.json())
+                .then(data => {
+                    // Add a simulated log entry
+                    const log = document.getElementById('processLog');
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    logEntry.textContent = `[MANUAL] Forced update: Period ${data.period} - ${data.result} - ${new Date().toLocaleTimeString()}`;
+                    log.appendChild(logEntry);
+                    log.scrollTop = log.scrollHeight;
+                    
+                    // Update display immediately
+                    updateStatus();
+                });
+        }
+
+        // Initialize the interface
+        window.onload = function() {
+            initializeProgress();
+            statusInterval = setInterval(updateStatus, 1000); // Update every second for countdown
+            createMatrixEffect();
+            
+            // Start with matrix effect
+            setTimeout(startMatrix, 1000);
+        };
+
+        // Cleanup on page unload
+        window.onbeforeunload = function() {
+            clearInterval(progressInterval);
+            clearInterval(statusInterval);
+            clearInterval(countdownInterval);
+            if (eventSource) eventSource.close();
+        };
+    </script>
+</body>
+</html>
