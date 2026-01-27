@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MADARA X UXM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <span style="color:red;">MADARA x UXM</span>
+    </div>
+
+    <!-- CURRENT PERIOD & PREDICTION -->
+    <div class="top-box">
+        <p><b>Period :</b> <span id="period-number">---</span></p>
+        <p><b>Prediction :</b> <span id="predicted-result" class="pending-text">WAITING</span></p>
+        <p><b>Probability :</b> <span id="probability">--%</span></p>
+        <p><b>Engine :</b> <span id="engine-mode">UXM ULTRA</span></p>
+    </div>
+
+    <!-- ANALYSIS BOX -->
+    <div class="analysis">
+        <h3>Analysis</h3>
+        <div class="grid">
+            <div class="box green">MODE<br>ULTRA</div>
+            <div class="box blue">ENGINE<br><span id="engine-status">UXM ULTRA</span></div>
+            <div class="box grey">STATUS<br><span id="status">LIVE</span></div>
+            <div class="box red">SERVER<br>ONLINE</div>
+        </div>
+    </div>
+
+    <!-- WIN / LOSE COUNTERS -->
+    <div class="counters">
+        <div class="counter green">WIN: <span id="win-count">0</span></div>
+        <div class="counter red">LOSE: <span id="lose-count">0</span></div>
+    </div>
+
+    <!-- PREDICTION HISTORY -->
+    <div class="history">
+        <h3>Prediction History</h3>
+        <div class="table-container">
+            <table id="history-table">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Prediction</th>
+                        <th>Result</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <!-- Rows will be inserted by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        <div class="history-controls">
+            <button onclick="clearHistory()" class="clear-btn">Clear History</button>
+            <span class="history-count">Records: <span id="record-count">0</span></span>
+        </div>
+    </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
