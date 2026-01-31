@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PREDICTOR Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.login-container {
+    background: rgba(0,0,0,0.85);
+    padding: 30px 40px;
+    border-radius: 10px;
+    text-align: center;
+    width: 350px;
+}
+#deviceId {
+    background: #111;
+    color: #0f0;
+    font-weight: bold;
+    font-size: 20px;
+    padding: 10px;
+    margin: 20px 0;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+}
+button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 6px;
+    background-color: #e50914;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+button:hover { background-color: #f40612; }
+#error { color: #ff4d4d; margin-top: 10px; min-height: 20px; font-size: 14px; }
+#loading { display: none; font-size: 16px; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<div class="login-container">
+    <h2>PREDICTOR Login</h2>
+    <p>Click your Device ID to copy</p>
+    <div id="deviceId"></div>
+    <button id="loginBtn">Login</button>
+    <div id="loading">Checking access...</div>
+    <div id="error"></div>
+</div>
+
+<script>
+// 🔹 Generate or retrieve unique device ID for this browser
+function generateDeviceId() {
+    let id = localStorage.getItem('deviceId');
+    if (!id) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        id = '';
+        for (let i = 0; i < 8; i++) {
+            id += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        localStorage.setItem('deviceId', id);
+    }
+    return id;
+}
+
+const deviceEl = document.getElementById('deviceId');
+const deviceId = generateDeviceId();
+deviceEl.innerText = deviceId;
+
+// 🔹 Auto copy when clicked
+deviceEl.addEventListener('click', () => {
+    navigator.clipboard.writeText(deviceId).then(() => {
+        alert('Device ID copied to clipboard!');
+    });
+});
+
+// 🔹 Login button
+document.getElementById("loginBtn").onclick = async () => {
+    const errorEl = document.getElementById("error");
+    const loadingEl = document.getElementById("loading");
+    errorEl.innerText = "";
+    loadingEl.style.display = "block";
+
+    try {
+        const res = await fetch('/login', { // Your server-side endpoint
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ deviceId })
+        });
+
+        const data = await res.json();
+        loadingEl.style.display = "none";
+
+        if(data.success){
+            window.location.href = 'index.html'; // Access granted
+        } else {
+            errorEl.innerText = data.error || "Access denied";
+        }
+
+    } catch(err){
+        loadingEl.style.display = "none";
+        errorEl.innerText = "Server error: " + err.message;
+    }
+};
+</script>
+
+</body>
+</html>

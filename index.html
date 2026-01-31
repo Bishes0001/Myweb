@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UXM OWNER</title>
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ================= GLOBAL ================= */
+*{margin:0;padding:0;box-sizing:border-box;font-family:'El Messiri',sans-serif;text-align:center}
+body{background:#eef4ff;color:#0d47a1;padding-bottom:90px}
+
+/* ================= HEADER ================= */
+.header{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:#ffffff;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.profile{width:45px;height:45px;border-radius:50%;background:#bbdefb}
+.header-text h1{font-size:22px;font-weight:800;color:#1565c0}
+.header-text p{font-size:13px;color:#1976d2}
+
+/* ================= BIG TEXT ================= */
+.big-text,.small-text{font-size:100px;font-weight:900;margin-top:20px;letter-spacing:4px}
+.big-text{color:#1565c0}
+.small-text{color:#42a5f5}
+.probability{color:#555;margin-bottom:10px}
+
+/* ================= DIAMONDS ================= */
+.star-boxes{display:flex;justify-content:center;gap:14px;margin:20px 0}
+.star-box{width:55px;height:55px;background:#1e88e5;transform:rotate(45deg);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900}
+.star-box span{transform:rotate(-45deg)}
+
+/* ================= STATS ================= */
+.stats{display:flex;justify-content:space-around;margin:20px 15px}
+.stat{width:30%;padding:18px 0;border-radius:18px;font-size:26px;font-weight:900}
+.win{background:#c8e6c9;color:#1b5e20}
+.lose{background:#ffcdd2;color:#b71c1c}
+.total{background:#bbdefb;color:#0d47a1}
+
+/* ================= OVAL BOARD ================= */
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:15px 25px}
+.oval{height:34px;border-radius:18px;background:#e3f2fd}
+.oval.active{background:#1e88e5}
+
+/* ================= HISTORY ================= */
+.history{width:94%;margin:25px auto;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,.08)}
+.history th{background:#1565c0;color:#fff;padding:10px}
+.history td{padding:10px;border-bottom:1px solid #eee}
+.win-text{color:green;font-weight:800}
+.loss-text{color:red;font-weight:800}
+.pending-text{color:#555;font-weight:800}
+
+/* ================= GAME PAGE ================= */
+.hidden{display:none}
+.game-header{font-size:22px;font-weight:800;padding:15px;background:#1565c0;color:white}
+.search-bar{display:flex;padding:10px;gap:10px}
+.search-bar input{flex:1;padding:10px;border-radius:8px;border:1px solid #ccc}
+.search-bar button{padding:10px 15px;border:none;background:#1565c0;color:white;border-radius:8px}
+#game-frame{width:100%;height:80vh;border:none}
+
+/* ================= BOTTOM NAV ================= */
+.bottom-nav{position:fixed;bottom:0;width:100%;display:flex;background:#1565c0}
+.nav-btn{flex:1;padding:15px;color:white;font-weight:700;cursor:pointer}
+.nav-btn.active{background:#0d47a1}
+</style>
+</head>
+<body>
+
+<!-- ================= PREDICTOR PAGE ================= -->
+<div id="predictor-page">
+
+<div class="header">
+    <div class="profile"></div>
+    <div class="header-text">
+        <h1>UXM MOD</h1>
+        <p>Let the market work in your favor 🚀</p>
+    </div>
+    <div class="menu">☰</div>
+</div>
+
+<div id="predicted-result" class="big-text">BIG</div>
+<div class="probability">Confidence: <span id="probability">--%</span></div>
+
+<div class="number-title">LATEST NUMBER: <span id="latest-number">--</span></div>
+
+<div class="star-boxes">
+    <div class="star-box"><span id="d1">-</span></div>
+    <div class="star-box"><span id="d2">-</span></div>
+    <div class="star-box"><span id="d3">-</span></div>
+    <div class="star-box"><span id="d4">-</span></div>
+    <div class="star-box"><span id="d5">-</span></div>
+</div>
+
+<div class="stats">
+    <div class="stat win" id="win-count">0</div>
+    <div class="stat lose" id="lose-count">0</div>
+    <div class="stat total" id="record-count">0</div>
+</div>
+
+<div class="board" id="result-board"></div>
+
+<table class="history">
+<thead>
+<tr>
+<th>Period</th><th>Pred</th><th>Result</th><th>Status</th>
+</tr>
+</thead>
+<tbody id="history-body"></tbody>
+</table>
+
+</div>
+
+<!-- ================= GAME PAGE ================= -->
+<div id="game-page" class="hidden">
+    <div class="game-header">Game Browser</div>
+    <div class="search-bar">
+        <input type="text" id="game-url" placeholder="Enter game website URL...">
+        <button onclick="loadGame()">Go</button>
+    </div>
+    <iframe id="game-frame"></iframe>
+</div>
+
+<!-- ================= BOTTOM NAV ================= -->
+<div class="bottom-nav">
+    <div class="nav-btn active" onclick="showPredictor()">Predictor</div>
+    <div class="nav-btn" onclick="showGame()">Game Page</div>
+</div>
+
+<script>
+// ===================================================
+// ⚙️ CONFIG
+// ===================================================
+const UPDATE_INTERVAL = 2000;
+const MAX_HISTORY_ITEMS = 15;
+const CACHE_DURATION = 3000;
+
+// ===================================================
+// 🌍 GLOBAL STATE
+// ===================================================
+let predictionHistory = [];
+let lastProcessedPeriod = null;
+let isProcessing = false;
+let cachedResults = null;
+let cacheTime = 0;
+
+// ===================================================
+// 🔢 HELPERS
+// ===================================================
+function getSize(num){ return num <= 4 ? "SMALL" : "BIG"; }
+function opposite(s){ return s === "BIG" ? "SMALL" : "BIG"; }
+
+// ===================================================
+// 🧠 LOSS FLIP PRO V4
+// ===================================================
+function lossFlipPro(results, lastPrediction, lastWasLoss){
+    if(!lastWasLoss) return null;
+    const sizes = results.slice(0,8).map(r=>getSize(parseInt(r.number)));
+    if(sizes.length < 5) return opposite(lastPrediction);
+    const r = sizes;
+    const last = r[0];
+    const smallCount = r.filter(x=>"SMALL"===x).length;
+    const bigCount = r.length - smallCount;
+    if(smallCount>=6) return "SMALL";
+    if(bigCount>=6) return "BIG";
+    let streak=1;
+    for(let i=1;i<r.length;i++){if(r[i]===r[i-1]) streak++; else break;}
+    if(streak>=3) return last;
+    if(r[1]===r[2] && r[2]===r[3] && r[0]!==r[1] && r[4]===r[1]) return r[0];
+    let alternations=0;
+    for(let i=0;i<6;i++) if(r[i]!==r[i+1]) alternations++;
+    const balanced = Math.abs(smallCount-bigCount)<=2;
+    if(alternations>=5 && balanced) return r[1];
+    if(r[2]===r[3] && r[3]===r[4] && r[0]!==r[2]) return r[2];
+    if(smallCount>bigCount+1) return "SMALL";
+    if(bigCount>smallCount+1) return "BIG";
+    return opposite(lastPrediction);
+}
+
+// ===================================================
+// 📡 FETCH CURRENT PERIOD
+// ===================================================
+async function fetchCurrentGameIssue(){
+    try{
+        const res = await fetch("https://api.bdg88zf.com/api/webapi/GetGameIssue",{
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body:JSON.stringify({
+                typeId:1,language:0,
+                random:"40079dcba93a48769c6ee9d4d4fae23f",
+                signature:"D12108C4F57C549D82B23A91E0FA20AE",
+                timestamp:Math.floor(Date.now()/1000)
+            })
+        });
+        const json = await res.json();
+        const p = json.data?.issueNumber;
+        if(json.code===0 && p && p!==lastProcessedPeriod){
+            lastProcessedPeriod=p;
+            return {newPeriod:p,isNew:true};
+        }
+    }catch{}
+    return {isNew:false};
+}
+
+// ===================================================
+// 📊 FETCH RESULTS HISTORY
+// ===================================================
+async function fetchResults(){
+    const now = Date.now();
+    if(cachedResults && now-cacheTime<CACHE_DURATION) return cachedResults;
+    try{
+        const res = await fetch(`https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json?ts=${now}`);
+        const json = await res.json();
+        cachedResults = json?.data?.list||[];
+        cacheTime = now;
+        updateBoardUI(cachedResults.slice(0,25));
+        updateLatestNumber(cachedResults[0]?.number);
+        updateLastFiveStars(cachedResults);
+    }catch{}
+    return cachedResults||[];
+}
+
+// ===================================================
+// 🔮 PREDICTION ENGINE
+// ===================================================
+async function titanPredict(){
+    const data = await fetchResults();
+    const results = data.slice(0,30);
+    if(results.length<5) return {result:"SMALL",probability:70};
+    let final = getSize(parseInt(results[0].number));
+    let confidence = 72;
+    const lastRecord = predictionHistory[predictionHistory.length-1];
+    if(lastRecord && lastRecord.status==="LOSE"){
+        const lf = lossFlipPro(results,lastRecord.prediction,true);
+        if(lf){final=lf; confidence=82;}
+    }
+    return {result:final,probability:confidence};
+}
+
+// ===================================================
+// ➕ ADD NEW PREDICTION
+// ===================================================
+async function addPrediction(period){
+    if(predictionHistory.some(p=>p.period===period)) return;
+    const pred = await titanPredict();
+    predictionHistory.push({period,prediction:pred.result,result:null,status:"PENDING",probability:pred.probability});
+    if(predictionHistory.length>MAX_HISTORY_ITEMS)
+        predictionHistory = predictionHistory.slice(-MAX_HISTORY_ITEMS);
+    updateCurrentPrediction(pred);
+    updateHistoryTable();
+}
+
+// ===================================================
+// 🔄 UPDATE WIN/LOSS
+// ===================================================
+async function updatePendingResults(){
+    const data = await fetchResults();
+    if(!data[0]) return;
+    const latest = {period:data[0].issueNumber,result:getSize(parseInt(data[0].number))};
+    predictionHistory.forEach(p=>{
+        if(p.status==="PENDING" && p.period===latest.period){
+            p.result=latest.result;
+            p.status = p.prediction===latest.result?"WIN":"LOSE";
+        }
+    });
+    updateHistoryTable();
+}
+
+// ===================================================
+// 🎨 UI UPDATES
+// ===================================================
+function updateLastFiveStars(results){
+    const last5 = results.slice(0,5);
+    ["d1","d2","d3","d4","d5"].forEach((id,i)=>{
+        const el = document.getElementById(id);
+        if(el) el.innerText = last5[i]?.number||"-";
+    });
+}
+function updateLatestNumber(num){ const el = document.getElementById("latest-number"); if(el && num!==undefined) el.innerText=num; }
+function updateBoardUI(results){ const board = document.getElementById("result-board"); if(!board) return; board.innerHTML=""; results.forEach(r=>{ const div=document.createElement("div"); div.className="oval "+(parseInt(r.number)>4?"active":""); board.appendChild(div); }); }
+function updateCurrentPrediction(p){ const el=document.getElementById("predicted-result"); if(!el) return; el.className = p.result==="BIG"?"big-text":"small-text"; el.innerText = p.result; document.getElementById("probability").innerText = p.probability+"%"; }
+function updateHistoryTable(){ const body=document.getElementById("history-body"); if(!body) return; body.innerHTML=""; let win=0,lose=0; [...predictionHistory].reverse().forEach(p=>{ if(p.status==="WIN") win++; if(p.status==="LOSE") lose++; const tr=document.createElement("tr"); tr.innerHTML=`<td>${p.period}</td><td>${p.prediction}</td><td>${p.result||"---"}</td><td class="${p.status==="WIN"?"win-text":p.status==="LOSE"?"loss-text":"pending-text"}">${p.status}</td>`; body.appendChild(tr); }); document.getElementById("win-count").innerText=win; document.getElementById("lose-count").innerText=lose; document.getElementById("record-count").innerText=predictionHistory.length; }
+
+// ===================================================
+// 🔁 MAIN LOOP
+// ===================================================
+async function processUpdate(){
+    if(isProcessing) return;
+    isProcessing=true;
+    try{
+        const info = await fetchCurrentGameIssue();
+        await updatePendingResults();
+        if(info.isNew) await addPrediction(info.newPeriod);
+    }finally{ isProcessing=false; }
+}
+document.addEventListener("DOMContentLoaded",()=>{
+    setInterval(processUpdate,UPDATE_INTERVAL);
+});
+
+// ===================================================
+// 📱 PAGE NAVIGATION
+// ===================================================
+function showPredictor(){
+    document.getElementById("predictor-page").classList.remove("hidden");
+    document.getElementById("game-page").classList.add("hidden");
+    document.querySelectorAll(".nav-btn")[0].classList.add("active");
+    document.querySelectorAll(".nav-btn")[1].classList.remove("active");
+}
+function showGame(){
+    document.getElementById("predictor-page").classList.add("hidden");
+    document.getElementById("game-page").classList.remove("hidden");
+    document.querySelectorAll(".nav-btn")[1].classList.add("active");
+    document.querySelectorAll(".nav-btn")[0].classList.remove("active");
+}
+function loadGame(){
+    let url = document.getElementById("game-url").value.trim();
+    if(!url){ alert("Enter game website link"); return; }
+    if(!url.startsWith("http")) url="https://"+url;
+    document.getElementById("game-frame").src = url;
+}
+showPredictor();
+</script>
+</body>
+</html>
